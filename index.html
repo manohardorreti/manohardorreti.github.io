@@ -12,18 +12,15 @@
     </style>
 </head>
 <body>
-    <!-- Left Side: File Upload -->
-    <div class="container" id="left-box">
+    <div class="container">
         <h3>Upload File</h3>
         <div class="upload-box">
             <input type="file" id="file-input" />
-            <input type="password" id="security-key" placeholder="Enter Security Key" />
+            <input type="password" id="security-key" placeholder="Enter Security Key" maxlength="20" />
             <button onclick="uploadFile()">Upload</button>
         </div>
     </div>
-
-    <!-- Right Side: QR Code Display -->
-    <div class="container" id="right-box">
+    <div class="container">
         <h3>QR Code</h3>
         <div id="qrcode">
             <p>No QR Code generated yet.</p>
@@ -31,7 +28,7 @@
     </div>
 
     <script>
-        function uploadFile() {
+        async function uploadFile() {
             const fileInput = document.getElementById('file-input');
             const securityKey = document.getElementById('security-key').value;
 
@@ -44,28 +41,26 @@
             formData.append('file', fileInput.files[0]);
             formData.append('key', securityKey);
 
-            fetch('/upload', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (response.ok) {
-                    return response.blob();
-                } else {
-                    alert('Error uploading file.');
+            try {
+                const response = await fetch('http://localhost:5000/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    alert('Failed to upload file.');
+                    return;
                 }
-            })
-            .then(imageBlob => {
-                // Display the QR code
+
+                const blob = await response.blob();
                 const qrCodeDiv = document.getElementById('qrcode');
                 qrCodeDiv.innerHTML = '';
                 const img = document.createElement('img');
-                img.src = URL.createObjectURL(imageBlob);
+                img.src = URL.createObjectURL(blob);
                 qrCodeDiv.appendChild(img);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+            } catch (error) {
+                console.error('Error uploading file:', error);
+            }
         }
     </script>
 </body>
