@@ -3,69 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Upload and QR Code Generator</title>
+    <title>File Upload Demo</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; display: flex; gap: 20px; }
-        .container { border: 2px dashed #ccc; padding: 20px; width: 45%; text-align: center; }
-        .upload-box { display: flex; flex-direction: column; gap: 10px; }
-        #qrcode { margin-top: 20px; }
+        #drop-area {
+            border: 2px dashed #ccc;
+            border-radius: 20px;
+            width: 300px;
+            height: 200px;
+            margin: 50px auto;
+            text-align: center;
+            padding: 20px;
+        }
+        #drop-area.hover {
+            border-color: #333;
+        }
     </style>
 </head>
 <body>
-    <!-- Left Side: File Upload -->
-    <div class="container" id="left-box">
-        <h3>Upload File</h3>
-        <div class="upload-box">
-            <input type="file" id="file-input" />
-            <input type="password" id="security-key" placeholder="Enter Security Key" />
-            <button onclick="uploadFile()">Upload</button>
-        </div>
-    </div>
 
-    <!-- Right Side: QR Code Display -->
-    <div class="container" id="right-box">
-        <h3>QR Code</h3>
-        <div id="qrcode">
-            <p>No QR Code generated yet.</p>
-        </div>
-    </div>
+<div id="drop-area">
+    <h3>Drag and Drop Files Here</h3>
+    <p>or</p>
+    <input type="file" id="fileElem" multiple accept="*/*" style="display:none;">
+    <label for="fileElem" style="cursor:pointer;">Select Files</label>
+</div>
 
-    <script>
-        function uploadFile() {
-            const fileInput = document.getElementById('file-input');
-            const securityKey = document.getElementById('security-key').value;
+<script>
+    let dropArea = document.getElementById('drop-area');
 
-            if (!fileInput.files.length || !securityKey) {
-                alert('Please select a file and enter a security key.');
-                return;
-            }
+    // Prevent default behaviors (Prevent file from being opened)
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
 
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-            formData.append('key', securityKey);
+    // Highlight the drop area when item is dragged over it
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+    });
 
-            fetch('YOUR_BACKEND_URL/upload', {  // Replace with your actual backend URL
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (response.ok) {
-                    return response.blob();
-                } else {
-                    alert('Error uploading file.');
-                }
-            })
-            .then(imageBlob => {
-                const qrCodeDiv = document.getElementById('qrcode');
-                qrCodeDiv.innerHTML = '';
-                const img = document.createElement('img');
-                img.src = URL.createObjectURL(imageBlob);
-                qrCodeDiv.appendChild(img);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        }
-    </script>
+    // Remove highlight when item is no longer dragging over the drop area
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+    });
+
+    // Handle dropped files
+    dropArea.addEventListener('drop', handleDrop, false);
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    function highlight() {
+        dropArea.classList.add('hover');
+    }
+
+    function unhighlight() {
+        dropArea.classList.remove('hover');
+    }
+
+    function handleDrop(e) {
+        let dt = e.dataTransfer;
+        let files = dt.files;
+
+        handleFiles(files);
+    }
+
+    function handleFiles(files) {
+        ([...files]).forEach(uploadFile);
+    }
+
+    function uploadFile(file) {
+        console.log('File uploaded:', file.name);
+        // You can add your upload logic here
+    }
+</script>
+
 </body>
 </html>
